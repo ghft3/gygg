@@ -3576,6 +3576,36 @@
   font-weight: bold;
   z-index: 10;
 }
+#loadingContainer {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+        background: #000;
+    }
+    
+    #loadingVideo {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    /* Скрываем основной контент пока идет загрузка */
+    body > *:not(#loadingContainer) {
+        visibility: hidden;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    body.loaded > *:not(#loadingContainer) {
+        visibility: visible;
+        opacity: 1;
+    }
   </style>
 </head>
 <body>
@@ -4285,13 +4315,13 @@
   </div>
 </div>
 
-<video id="myVideo" muted loop playsinline>
-    <!-- Источник указывается относительный путь -->
-    <source src="C:/Users/User/Telegram-prodgect/client/video_2025-08-25_00-03-06.mp4" type="video/mp4">
-    Your browser does not support the video tag.
-</video>
-
-
+<!-- Контейнер для загрузки -->
+<div id="loadingContainer">
+    <video id="loadingVideo" muted playsinline>
+        <source src="assets/videos/video_2025-08-25_00-03-06.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+  </div>
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
@@ -7411,12 +7441,88 @@ var swipeStyle = document.createElement('style');
 swipeStyle.textContent = '.cart-item { transition: transform 0.3s ease; position: relative; }';
 document.head.appendChild(swipeStyle);
 
-    // Видео уже доступно сразу, можно проиграть его при загрузке страницы
-    document.addEventListener('DOMContentLoaded', () => {
-        const video = document.getElementById('myVideo');
-        video.play().catch(e => console.log("Autoplay was prevented:", e));
-    });
+// ===== СИСТЕМА ЗАГРУЗКИ С ВИДЕО И ВИБРАЦИЕЙ =====
+function startBubbleVibration() {
+    if (window.Telegram?.WebApp?.HapticFeedback) {
+        setTimeout(() => {
+            const duration = 2000;
+            const endTime = Date.now() + duration;
 
+            (function bubblePop() {
+                if (Date.now() < endTime) {
+                    const type = Math.random() > 0.5 ? 'light' : 'medium';
+                    Telegram.WebApp.HapticFeedback.impactOccurred(type);
+                    const nextDelay = Math.random() * (150 - 30) + 30;
+                    setTimeout(bubblePop, nextDelay);
+                }
+            })();
+        }, 1000);
+    }
+}
+
+function hideLoading() {
+    const loadingContainer = document.getElementById('loadingContainer');
+    if (loadingContainer) {
+        loadingContainer.style.display = 'none';
+    }
+    
+    document.body.classList.add('loaded');
+    
+    // ЗАПУСКАЕМ ВАШЕ ОСНОВНОЕ ПРИЛОЖЕНИЕ
+    initMainApplication();
+}
+
+function initMainApplication() {
+    console.log("🚀 Основное приложение запускается");
+    
+    // ВЫЗОВИТЕ ВАШИ ФУНКЦИИ ИНИЦИАЛИЗАЦИИ ЗДЕСЬ
+    if (typeof initUserData === 'function') initUserData();
+    if (typeof initSwipeHandlers === 'function') initSwipeHandlers();
+    if (typeof initPaymentPage === 'function') initPaymentPage();
+    
+    // Другие ваши функции инициализации
+    if (document.getElementById('storage-page')?.style.display !== 'none') {
+        if (typeof initStoragePage === 'function') initStoragePage();
+        if (typeof updateStorageBadge === 'function') updateStorageBadge();
+    }
+    
+    // Вызов остальных инициализаций
+    setTimeout(() => {
+        if (typeof updateCartIconCount === 'function') updateCartIconCount();
+    }, 500);
+}
+
+// Запуск системы загрузки
+document.addEventListener('DOMContentLoaded', function() {
+    const video = document.getElementById('loadingVideo');
+    if (!video) {
+        console.log("Видео не найдено, запускаем приложение сразу");
+        hideLoading();
+        return;
+    }
+    
+    // Пытаемся запустить видео
+    const playPromise = video.play();
+    
+    if (playPromise !== undefined) {
+        playPromise.then(() => {
+            console.log("✅ Видео загрузки запущено");
+            startBubbleVibration();
+            
+            // Скрываем загрузку когда видео закончится
+            video.addEventListener('ended', hideLoading);
+            
+            // На всякий случай: скрыть через 10 секунд максимум
+            setTimeout(hideLoading, 10000);
+            
+        }).catch(error => {
+            console.log("❌ Автозапуск видео заблокирован:", error);
+            video.controls = true;
+            // Запускаем приложение без видео
+            setTimeout(hideLoading, 1500);
+        });
+    }
+})
 </script>
 
 <script>
