@@ -3577,24 +3577,17 @@
   z-index: 10;
 }
 #loadingContainer {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: 10000;
-        background: #000;
-    }
-    
-    #loadingVideo {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-    
-    body:not(.loaded) > *:not(#loadingContainer) {
-        display: none !important;
-    }
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    z-index: 10000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
   </style>
 </head>
 <body>
@@ -4302,13 +4295,6 @@
       </div>
     </div>
   </div>
-</div>
-
-<!-- Контейнер для загрузки -->
-<div id="loadingContainer">
-    <video id="loadingVideo" muted playsinline webkit-playsinline autoplay loop>
-        <source src="assets/videos/video_2025-08-25_00-03-06.mp4" type="video/mp4">
-    </video>
 </div>
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -7428,64 +7414,6 @@ document.head.appendChild(inCartStyleSheet);
 var swipeStyle = document.createElement('style');
 swipeStyle.textContent = '.cart-item { transition: transform 0.3s ease; position: relative; }';
 document.head.appendChild(swipeStyle);
-
-// Ваша оригинальная функция вибрации
-function startBubbleVibration() {
-    if (window.Telegram?.WebApp?.HapticFeedback) {
-        setTimeout(() => {
-            const duration = 2000;
-            const endTime = Date.now() + duration;
-
-            (function bubblePop() {
-                if (Date.now() < endTime) {
-                    const type = Math.random() > 0.5 ? 'light' : 'medium';
-                    Telegram.WebApp.HapticFeedback.impactOccurred(type);
-                    const nextDelay = Math.random() * (150 - 30) + 30;
-                    setTimeout(bubblePop, nextDelay);
-                }
-            })();
-        }, 1000);
-    }
-}
-
-function hideLoading() {
-    const loadingContainer = document.getElementById('loadingContainer');
-    if (loadingContainer) loadingContainer.style.display = 'none';
-    document.body.classList.add('loaded');
-    initMainApplication();
-}
-
-function initMainApplication() {
-    // ВАШЕ ПРИЛОЖЕНИЕ
-    if (typeof initUserData === 'function') initUserData();
-    if (typeof initSwipeHandlers === 'function') initSwipeHandlers();
-    if (typeof initPaymentPage === 'function') initPaymentPage();
-    if (document.getElementById('storage-page') && typeof initStoragePage === 'function') initStoragePage();
-}
-
-// Простая и надежная загрузка
-document.addEventListener('DOMContentLoaded', function() {
-    const video = document.getElementById('loadingVideo');
-    
-    if (!video) {
-        setTimeout(hideLoading, 2000);
-        return;
-    }
-
-    // 1. Запускаем вибрацию через 1.05 сек как у вас
-    setTimeout(startBubbleVibration, 1000);
-
-    // 2. Пытаемся играть видео
-    video.play().catch(error => {
-        console.log("Автозапуск видео заблокирован, но продолжаем");
-    });
-
-    // 3. Скрываем загрузку когда видео заканчивается
-    video.addEventListener('ended', hideLoading);
-    
-    // 4. На всякий случай - максимум 10 секунд
-    setTimeout(hideLoading, 10000);
-});
 </script>
 
 <script>
